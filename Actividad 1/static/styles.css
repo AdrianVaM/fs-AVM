@@ -71,7 +71,7 @@ grid {
     width: 100%;
     justify-content: stretch;
     align-items: stretch;
-    margin: 1rem 0 5vh 0;
+    margin: 1rem 0 1vh 0;
 }
 
 .main>* {
@@ -124,8 +124,7 @@ a:visited {
     grid {
         flex-direction: column;
         width: 100%;
-        justify-content: stretch;
-        align-items: stretch;
+        gap: 0.1rem;
     }
 
     .imgcont {
@@ -158,19 +157,15 @@ a:visited {
     }
 
     grid>.container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         width: 100%;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-        justify-content: center;
-        align-items: center;
     }
 
     grid .imgcont {
         flex: 1 1 0;
-        min-width: 200px;
-        max-width: 300px;
+        min-width: 300px;
+        min-height: 300px;
         box-sizing: border-box;
     }
 }
