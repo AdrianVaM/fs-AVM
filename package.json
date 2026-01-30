@@ -1,0 +1,27 @@
+{
+  "name": "fs-avm",
+  "version": "1.0.0",
+  "description": "Repositorio de actividades de Adrian VM del curso de desarrollo FullStack",
+  "homepage": "https://github.com/AdrianVaM/fs-AVM#readme",
+  "bugs": {
+    "url": "https://github.com/AdrianVaM/fs-AVM/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdrianVaM/fs-AVM.git"
+  },
+  "license": "ISC",
+  "author": "AdrianVaM",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "ejs": "^4.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "mysql2": "^3.16.2"
+  }
+}

@@ -1,8 +1,8 @@
+<!--DEPRECTATED-->
 <!DOCTYPE html>
 
 <head>
     <title>RSS de SA de CV</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 
@@ -11,12 +11,12 @@
         <span class="topbar-title">RSS de SA de CV</span>
     </div>
     <div class="main">
-        <div class="container">
+        <div class="container" id="form">
             <form id="userForm" autocomplete="off">
-                <label for="name">Nombre:</label>
-                <input type="text" name="name" id="name" autocomplete="off" placeholder="placeholder">
-                <label for="password">Contraseña:</label>
-                <input type="password" name="password" id="password" autocomplete="off" value="1">
+                <label for="name">Nombre:</label><br>
+                <input type="text" name="name" id="name" autocomplete="off" placeholder="placeholder"><br><br>
+                <label for="password">Contraseña:</label><br>
+                <input type="password" name="password" id="password" autocomplete="off"><br><br>
                 <input type="submit" id="submit" value="Agregar">
             </form>
         </div>
@@ -36,7 +36,7 @@
     <p>Para más información:</p>
     <nav>
         <a href="/">Inicio</a> |
-        <a href="/a">Formulario</a> |
+        <a href="/form">Formulario</a> |
         <a href="https://github.com/AdrianVaM/fs-AVM" target="_blank">Github</a>
     </nav>
 </footer>
