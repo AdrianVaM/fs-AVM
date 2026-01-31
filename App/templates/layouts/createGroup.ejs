@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crear Grupo</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <%- include('../partials/topbar', { user: user }) %>
+    <div class="main">
+        <div class="container">
+            <h2>Crear nuevo grupo</h2>
+            <% if (error) { %>
+                <div class="error"><%= error %></div>
+            <% } %>
+            <form method="POST" action="/groups/create">
+                <label for="groupName">Nombre del grupo:</label><br>
+                <input type="text" id="groupName" name="groupName" required><br><br>
+                <button type="submit">Crear grupo</button>
+            </form>
+        </div>
+    </div>
+</body>
+<%- include('../partials/footer', { active: 'dashboard' }) %>

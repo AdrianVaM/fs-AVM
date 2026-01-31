@@ -1,3 +1,9 @@
 <div class="topbar">
     <span class="topbar-title">RSS de SA de CV</span>
+    <% if (typeof user !== 'undefined' && user) { %>
+        <span class="topbar-user"><%= user %> | <a href="/logout"><button>Cerrar sesión</button></a></span>
+    <% } %>
+    <% if (typeof user == 'undefined') { %>
+        <span class="topbar-guest"> | <a href="/login"><button>Iniciar sesión</button></a> <a href="/register"><button>Registrarse</button></a></span>
+    <% } %>
 </div>

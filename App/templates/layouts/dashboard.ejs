@@ -6,43 +6,30 @@
 </head>
 
 <body>
-    <div class="topbar">
-        <span class="topbar-title">RSS de SA de CV</span>
-    </div>
+    <%- include('../partials/topbar', { active: 'dashboard', user: user }) %>
     <div class="main">
-        <div class="container" id="form">
-            <form id="userForm" autocomplete="off" method="POST" action="/form">
-                <label for="name">Nombre:</label><br>
-                <input type="text" name="name" id="name" autocomplete="off" placeholder="placeholder"><br><br>
-                <label for="password">Contraseña:</label><br>
-                <input type="password" name="password" id="password" autocomplete="off"><br><br>
-                <input type="submit" id="submit" value="Agregar">
-            </form>
+        <div class="container" style="display: flex; gap: 2rem;">
+            <div style="min-width: 250px;">
+                <h3>Mis Grupos</h3>
+                <a href="/groups/create"><button>Crear grupo</button></a>
+                <div class="group-list">
+                    <% if (groups && groups.length > 0) { %>
+                        <% groups.forEach(function(group) { %>
+                            <div class="group-card">
+                                <a href="/groups/<%= group.GroupID %>"><%= group.Gname %></a>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div>No perteneces a ningún grupo.</div>
+                    <% } %>
+                </div>
+            </div>
+            <div style="flex:1;">
+                <!-- Aquí puedes poner el contenido principal del dashboard -->
+                <h2>Bienvenido, <%= user %></h2>
+                <p>Selecciona un grupo para ver su información.</p>
+            </div>
         </div>
-        <% if (users && users.length> 0) { %>
-            <ul id="itemList">
-                <% users.forEach(function(user) { %>
-                    <li class="container" style="position: relative;">
-                        <p class="bold">Usuario:</p>
-                        <p>
-                            <%= user.name %>
-                        </p>
-                        <p class="bold">Contraseña:</p>
-                        <p class="censored">
-                            <%= user.password %>
-                        </p>
-                    </li>
-                    <% }); %>
-            </ul>
-            <% } %>
     </div>
-    <!-- <script src="/static/js/app.js"></script> -->
 </body>
-<footer>
-    <p>Para más información:</p>
-    <nav>
-        <a href="/">Inicio</a> |
-        <a href="/form">Formulario</a> |
-        <a href="https://github.com/AdrianVaM/fs-AVM" target="_blank">Github</a>
-    </nav>
-</footer>
+<%- include('../partials/footer', { active: 'dashboard' }) %>

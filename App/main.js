@@ -1,4 +1,12 @@
 const express = require('express');
+const session = require('express-session');
+// Configuración de sesiones
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'fs-avm-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 } // 1 hora
+}));
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { getRegistry, getRegistries, updateRegistries } = require('./src/sqlutils.js');
@@ -16,35 +24,39 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
-
-// Almacenar usuarios en memoria (solo para demo)
-const users = [];
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'templates/layouts', 'index.html'));
+});
 
 app.route('/login')
     .get((req, res) => {
-        res.render('layouts/login', { users });
+        if (req.session && req.session.user) {
+            return res.redirect('/dashboard');
+        }
+        res.render('layouts/login', { error: null, user: req.session.user });
     })
     .post(async (req, res) => {
         const { name, password } = req.body;
         if (name && password) {
             const result = await getRegistries("SELECT PWordHash FROM Users WHERE Uname = ?", [name]);
             if (!result) {
-                return res.render('layouts/login', { users, error: 'Usuario no encontrado' });
+                return res.render('layouts/login', { error: 'Usuario no encontrado', user: req.session.user });
             }
             const match = await bcrypt.compare(password, result[0].PWordHash);
             if (match) {
-                return res.redirect('/test');
+                req.session.user = name;
+                return res.redirect('/dashboard');
             } else {
-                return res.render('layouts/login', { users, error: 'Contraseña incorrecta' });
+                return res.render('layouts/login', { error: 'Contraseña incorrecta', user: req.session.user });
             }
         }
-        res.render('layouts/login', { users, error: 'Faltan datos' });
+        res.render('layouts/login', { error: 'Faltan datos', user: req.session.user });
     });
 
 // Registro de usuario
 app.route('/register')
     .get((req, res) => {
-        res.render('layouts/register', { users });
+        res.render('layouts/register', { error: null, user: req.session.user });
     })
     .post(async (req, res) => {
         const { name, password } = req.body;
@@ -52,22 +64,73 @@ app.route('/register')
             // Verificar si el usuario ya existe
             const exists = await getRegistries("SELECT Uname FROM Users WHERE Uname = ?", [name]);
             if (exists) {
-                return res.render('layouts/register', { users, error: 'El usuario ya existe' });
+                return res.render('layouts/register', { error: 'El usuario ya existe', user: req.session.user });
             }
             const hash = await bcrypt.hash(password, 10);
             await updateRegistries("INSERT INTO Users (Uname, PWordHash) VALUES (?, ?)", [name, hash]);
             return res.redirect('/login');
         }
-        res.render('layouts/register', { users, error: 'Faltan datos' });
+        res.render('layouts/register', { error: 'Faltan datos', user: req.session.user });
     });
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'templates/layouts', 'index.html'));
+app.get('/dashboard', async (req, res) => {
+    if (!req.session || !req.session.user) {
+        return res.redirect('/login');
+    }
+    const userId = await getUserIdByName(req.session.user);
+    let groups = [];
+    if (userId) {
+        groups = await getRegistries(
+            `SELECT g.GroupID, g.Gname FROM TeamGroups g
+            JOIN UserGroups ug ON g.GroupID = ug.GroupID
+            WHERE ug.UserID = ?`, [userId]
+        ) || [];
+    }
+    res.render('layouts/dashboard', { user: req.session.user, groups });
 });
 
-app.get('/test', (req, res) => {
-    res.send("hola mundo")
+// Página para crear grupo
+app.get('/groups/create', (req, res) => {
+    if (!req.session || !req.session.user) return res.redirect('/login');
+    res.render('layouts/createGroup', { user: req.session.user, error: null });
 });
+
+// Lógica para crear grupo
+app.post('/groups/create', async (req, res) => {
+    if (!req.session || !req.session.user) return res.redirect('/login');
+    const { groupName } = req.body;
+    if (!groupName) {
+        return res.render('layouts/createGroup', { user: req.session.user, error: 'Nombre requerido' });
+    }
+    // Crear grupo y asociar usuario
+    const userId = await getUserIdByName(req.session.user);
+    const result = await updateRegistries("INSERT INTO TeamGroups (Gname, UStatus) VALUES (?, JSON_OBJECT())", [groupName]);
+    const groupId = result.insertId;
+    await updateRegistries("INSERT INTO UserGroups (UserID, GroupID) VALUES (?, ?)", [userId, groupId]);
+    res.redirect('/dashboard');
+});
+
+// Página de grupo específico
+app.get('/groups/:id', async (req, res) => {
+    if (!req.session || !req.session.user) return res.redirect('/login');
+    const groupId = req.params.id;
+    const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
+    if (!group) return res.status(404).send('Grupo no encontrado');
+    res.render('layouts/group', { user: req.session.user, group });
+});
+
+// Ruta para cerrar sesión
+app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/login');
+    });
+});
+
+// Utilidad para obtener el UserID por nombre de usuario
+async function getUserIdByName(name) {
+    const result = await getRegistry("SELECT UserID FROM Users WHERE Uname = ?", [name]);
+    return result ? result.UserID : null;
+}
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

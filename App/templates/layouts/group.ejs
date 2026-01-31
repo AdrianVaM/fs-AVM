@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Grupo <%= group.Gname %></title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <%- include('../partials/topbar', { user: user }) %>
+    <div class="main">
+        <div class="container">
+            <h2>Grupo: <%= group.Gname %></h2>
+            <p>ID: <%= group.GroupID %></p>
+            <pre>Estado: <%= group.UStatus %></pre>
+            <!-- Aquí puedes agregar más detalles del grupo -->
+        </div>
+    </div>
+</body>
+<%- include('../partials/footer', { active: 'dashboard' }) %>
