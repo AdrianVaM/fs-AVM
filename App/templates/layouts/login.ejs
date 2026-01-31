@@ -6,17 +6,22 @@
 </head>
 
 <body>
-    <%- include('../partials/topbar', { active: 'dashboard', user: user }) %>
+    <%- include('../partials/topbar', { active: 'dashboard' , user: user }) %>
         <div class="main">
             <div class="container" id="form">
                 <p>Log in:</p>
-                <form id="userForm" autocomplete="off" method="POST" action="/form">
-                    <label for="name">Nombre:</label><br>
-                    <input type="text" name="name" id="name" autocomplete="off" placeholder="placeholder"><br><br>
-                    <label for="password">Contraseña:</label><br>
-                    <input type="password" name="password" id="password" autocomplete="off"><br><br>
-                    <input type="submit" id="submit" value="Agregar">
-                </form>
+                <% if (typeof error !=='undefined' && error) { %>
+                    <div class="error">
+                        <%= error %>
+                    </div>
+                    <% } %>
+                        <form id="userForm" autocomplete="off" method="POST" action="/login">
+                            <label for="name">Nombre:</label><br>
+                            <input type="text" name="name" id="name" autocomplete="off"><br><br>
+                            <label for="password">Contraseña:</label><br>
+                            <input type="password" name="password" id="password" autocomplete="off"><br><br>
+                            <input type="submit" id="submit" value="Iniciar sesión">
+                        </form>
             </div>
         </div>
         <!-- <script src="/static/js/app.js"></script> -->

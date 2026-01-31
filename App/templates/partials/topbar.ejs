@@ -1,9 +1,39 @@
-<div class="topbar">
+<div class="topbar" style="display: flex; align-items: center; justify-content: space-between;">
     <span class="topbar-title">RSS de SA de CV</span>
-    <% if (typeof user !== 'undefined' && user) { %>
-        <span class="topbar-user"><%= user %> | <a href="/logout"><button>Cerrar sesión</button></a></span>
-    <% } %>
-    <% if (typeof user == 'undefined') { %>
-        <span class="topbar-guest"> | <a href="/login"><button>Iniciar sesión</button></a> <a href="/register"><button>Registrarse</button></a></span>
-    <% } %>
+    <% if (typeof user !=='undefined' && user) { %>
+        <div class="topbar-profile" style="position: relative; display: flex; align-items: center; margin-left: auto;">
+            <button onclick="toggleProfileDropdown()" class="profile-btn" style="margin-left: auto;">Perfil ▼</button>
+            <div id="profileDropdown" class="profile-dropdown"
+                style="display:none; position: absolute; right: 5px; top: 100%; background: #fff; border: 1px solid #ccc; min-width: 180px; z-index: 100; box-shadow: 0 4px 16px #0002;">
+                <div style="padding: 10px; border-bottom: 1px solid #eee;">
+                    <strong>Usuario:</strong>
+                    <%= user %><br>
+                        <% if (typeof userId !=='undefined' && userId) { %>
+                            <strong>ID:</strong>
+                            <%= userId %><br>
+                                <% } %>
+                </div>
+                <div style="padding: 10px;">
+                    <a href="/logout"><button style="width:100%;">Cerrar sesión</button></a>
+                </div>
+            </div>
+        </div>
+        <script>
+            function toggleProfileDropdown() {
+                var d = document.getElementById('profileDropdown');
+                d.style.display = d.style.display === 'block' ? 'none' : 'block';
+            }
+            document.addEventListener('click', function (e) {
+                var btn = document.querySelector('.profile-btn');
+                var dd = document.getElementById('profileDropdown');
+                if (!btn.contains(e.target) && !dd.contains(e.target)) {
+                    dd.style.display = 'none';
+                }
+            });
+        </script>
+        <% } %>
+            <% if (typeof user=='undefined' ) { %>
+                <span class="topbar-guest"> | <a href="/login"><button>Iniciar sesión</button></a> <a
+                        href="/register"><button>Registrarse</button></a></span>
+                <% } %>
 </div>

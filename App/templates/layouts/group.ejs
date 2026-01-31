@@ -1,18 +1,57 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Grupo <%= group.Gname %></title>
+    <title>Grupo <%= group.Gname %>
+    </title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
+
 <body>
-    <%- include('../partials/topbar', { user: user }) %>
-    <div class="main">
-        <div class="container">
-            <h2>Grupo: <%= group.Gname %></h2>
-            <p>ID: <%= group.GroupID %></p>
-            <pre>Estado: <%= group.UStatus %></pre>
-            <!-- Aquí puedes agregar más detalles del grupo -->
+    <%- include('../partials/topbar', { user: user, userId: userId }) %>
+        <div class="main">
+            <div class="container">
+                <h2>Grupo: <%= group.Gname %>
+                </h2>
+                <p>ID: <%= group.GroupID %>
+                </p>
+                <pre>Estado: <%= group.UStatus %></pre>
+                <h3>Miembros del grupo</h3>
+                <ul>
+                    <% if (members && members.length> 0) { %>
+                        <% members.forEach(function(m) { %>
+                            <li>ID: <%= m.userId %> - Estado: <%= m.status %>
+                            </li>
+                            <% }) %>
+                                <% } else { %>
+                                    <li>No hay miembros registrados.</li>
+                                    <% } %>
+                </ul>
+                <h4>Agregar usuario por ID</h4>
+                <% if (error) { %>
+                    <div class="error">
+                        <%= error %>
+                    </div>
+                    <% } %>
+                        <form method="POST" action="/groups/<%= group.GroupID %>/adduser">
+                            <label for="userId">ID de usuario:</label>
+                            <input type="number" name="userId" id="userId" required>
+                            <label for="status">Estado:</label>
+                            <select name="status" id="status">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                            <button type="submit">Agregar usuario</button>
+                        </form>
+                        <br>
+                        <form method="POST" action="/groups/<%= group.GroupID %>/delete"
+                            onsubmit="return confirm('¿Seguro que deseas borrar este grupo? Esta acción no se puede deshacer.');"
+                            style="margin-bottom: 2rem;">
+                            <button type="submit"
+                                style="background: #d32f2f; color: #fff; font-weight: bold; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 1.1em;">Borrar
+                                grupo</button>
+                        </form>
+            </div>
         </div>
-    </div>
 </body>
 <%- include('../partials/footer', { active: 'dashboard' }) %>

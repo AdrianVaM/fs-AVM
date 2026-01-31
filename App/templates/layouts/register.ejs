@@ -6,7 +6,7 @@
 </head>
 
 <body>
-    <%- include('../partials/topbar', { active: 'dashboard', user: user }) %>
+    <%- include('../partials/topbar', { active: 'dashboard' , user: user }) %>
         <div class="main">
             <div class="container" id="form">
                 <p>Registro:</p>
@@ -17,11 +17,10 @@
                     <% } %>
                         <form id="registerForm" autocomplete="off" method="POST" action="/register">
                             <label for="name">Nombre:</label><br>
-                            <input type="text" name="name" id="name" autocomplete="off"
-                                placeholder="placeholder"><br><br>
+                            <input type="text" name="name" id="name" autocomplete="off"><br><br>
                             <label for="password">Contraseña:</label><br>
                             <input type="password" name="password" id="password" autocomplete="off"><br><br>
-                            <input type="submit" id="submit" value="Registrar">
+                            <input type="submit" id="submit" value="Registrarsa">
                         </form>
             </div>
         </div>

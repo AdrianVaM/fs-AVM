@@ -1,12 +1,5 @@
 const express = require('express');
 const session = require('express-session');
-// Configuración de sesiones
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'fs-avm-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 } // 1 hora
-}));
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { getRegistry, getRegistries, updateRegistries } = require('./src/sqlutils.js');
@@ -14,8 +7,15 @@ const { getRegistry, getRegistries, updateRegistries } = require('./src/sqlutils
 const app = express();
 
 require('dotenv').config();
-const PORT = process.env.port ?? 5000;
 
+const PORT = process.env.port ?? 5000;
+// Configuración de sesiones
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'fs-avm-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 } // 1 hora
+}));
 // Configurar EJS como motor de plantillas
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'templates'));
@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'templates/layouts', 'index.html'));
+    res.render('layouts/index', { error: null, user: req.session.user });
 });
 
 app.route('/login')
@@ -86,7 +86,7 @@ app.get('/dashboard', async (req, res) => {
             WHERE ug.UserID = ?`, [userId]
         ) || [];
     }
-    res.render('layouts/dashboard', { user: req.session.user, groups });
+    res.render('layouts/dashboard', { user: req.session.user, userId, groups });
 });
 
 // Página para crear grupo
@@ -116,7 +116,63 @@ app.get('/groups/:id', async (req, res) => {
     const groupId = req.params.id;
     const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
     if (!group) return res.status(404).send('Grupo no encontrado');
-    res.render('layouts/group', { user: req.session.user, group });
+    // Obtener usuarios del grupo y su status
+    let members = [];
+    if (group.UStatus) {
+        try {
+            members = Object.entries(JSON.parse(group.UStatus)).map(([userId, status]) => ({ userId, status }));
+        } catch (e) { members = []; }
+    }
+    const userId = await getUserIdByName(req.session.user);
+    res.render('layouts/group', { user: req.session.user, userId, group, members, error: null });
+});
+
+// Borrar grupo
+app.post('/groups/:id/delete', async (req, res) => {
+    if (!req.session || !req.session.user) return res.redirect('/login');
+    const groupId = req.params.id;
+    // Opcional: solo permitir borrar si el usuario pertenece al grupo
+    const userId = await getUserIdByName(req.session.user);
+    const isMember = await getRegistry("SELECT * FROM UserGroups WHERE UserID = ? AND GroupID = ?", [userId, groupId]);
+    if (!isMember) return res.status(403).send('No autorizado para borrar este grupo');
+    await updateRegistries("DELETE FROM TeamGroups WHERE GroupID = ?", [groupId]);
+    await updateRegistries("DELETE FROM UserGroups WHERE GroupID = ?", [groupId]);
+    res.redirect('/dashboard');
+});
+
+// Añadir usuario a grupo por ID y actualizar UStatus
+app.post('/groups/:id/adduser', async (req, res) => {
+    if (!req.session || !req.session.user) return res.redirect('/login');
+    const groupId = req.params.id;
+    const { userId, status } = req.body;
+    const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
+    if (!group) return res.status(404).send('Grupo no encontrado');
+    // Verificar que el usuario existe
+    const user = await getRegistry("SELECT * FROM Users WHERE UserID = ?", [userId]);
+    if (!user) {
+        let members = [];
+        if (group.UStatus) {
+            try {
+                members = Object.entries(JSON.parse(group.UStatus)).map(([userId, status]) => ({ userId, status }));
+            } catch (e) { members = []; }
+        }
+        return res.render('layouts/group', { user: req.session.user, group, members, error: 'Usuario no encontrado' });
+    }
+    // Añadir a UserGroups si no existe
+    const exists = await getRegistry("SELECT * FROM UserGroups WHERE UserID = ? AND GroupID = ?", [userId, groupId]);
+    if (!exists) {
+        await updateRegistries("INSERT INTO UserGroups (UserID, GroupID) VALUES (?, ?)", [userId, groupId]);
+    }
+    // Actualizar UStatus JSON
+    let ustatus = {};
+    if (group.UStatus) {
+        try { ustatus = JSON.parse(group.UStatus); } catch (e) { ustatus = {}; }
+    }
+    ustatus[userId] = status === 'activo' ? 'activo' : 'inactivo';
+    await updateRegistries("UPDATE TeamGroups SET UStatus = ? WHERE GroupID = ?", [JSON.stringify(ustatus), groupId]);
+    // Refrescar datos
+    let members = Object.entries(ustatus).map(([userId, status]) => ({ userId, status }));
+    res.render('layouts/group', { user: req.session.user, group: { ...group, UStatus: JSON.stringify(ustatus) }, members, error: null });
 });
 
 // Ruta para cerrar sesión
