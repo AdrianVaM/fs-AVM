@@ -1,8 +1,11 @@
 const express = require('express');
 const path = require('path');
+const bcrypt = require('bcryptjs');
+const { getRegistry, getRegistries, updateRegistries } = require('./src/sqlutils.js');
+
 const app = express();
 
-process.loadEnvFile()
+require('dotenv').config();
 const PORT = process.env.port ?? 5000;
 
 // Configurar EJS como motor de plantillas
@@ -17,16 +20,45 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 // Almacenar usuarios en memoria (solo para demo)
 const users = [];
 
-app.route('/form')
+app.route('/login')
     .get((req, res) => {
-        res.render('layouts/form', { users });
+        res.render('layouts/login', { users });
     })
-    .post((req, res) => {
+    .post(async (req, res) => {
         const { name, password } = req.body;
         if (name && password) {
-            users.push({ name, password });
+            const result = await getRegistries("SELECT PWordHash FROM Users WHERE Uname = ?", [name]);
+            if (!result) {
+                return res.render('layouts/login', { users, error: 'Usuario no encontrado' });
+            }
+            const match = await bcrypt.compare(password, result[0].PWordHash);
+            if (match) {
+                return res.redirect('/test');
+            } else {
+                return res.render('layouts/login', { users, error: 'Contraseña incorrecta' });
+            }
         }
-        res.render('layouts/form', { users });
+        res.render('layouts/login', { users, error: 'Faltan datos' });
+    });
+
+// Registro de usuario
+app.route('/register')
+    .get((req, res) => {
+        res.render('layouts/register', { users });
+    })
+    .post(async (req, res) => {
+        const { name, password } = req.body;
+        if (name && password) {
+            // Verificar si el usuario ya existe
+            const exists = await getRegistries("SELECT Uname FROM Users WHERE Uname = ?", [name]);
+            if (exists) {
+                return res.render('layouts/register', { users, error: 'El usuario ya existe' });
+            }
+            const hash = await bcrypt.hash(password, 10);
+            await updateRegistries("INSERT INTO Users (Uname, PWordHash) VALUES (?, ?)", [name, hash]);
+            return res.redirect('/login');
+        }
+        res.render('layouts/register', { users, error: 'Faltan datos' });
     });
 
 app.get('/', (req, res) => {

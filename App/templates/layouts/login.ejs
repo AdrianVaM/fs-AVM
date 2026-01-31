@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<head>
+    <title>RSS de SA de CV</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <%- include('../partials/topbar', { active: 'dashboard' }) %>
+        <div class="main">
+            <div class="container" id="form">
+                <p>Log in:</p>
+                <form id="userForm" autocomplete="off" method="POST" action="/form">
+                    <label for="name">Nombre:</label><br>
+                    <input type="text" name="name" id="name" autocomplete="off" placeholder="placeholder"><br><br>
+                    <label for="password">Contraseña:</label><br>
+                    <input type="password" name="password" id="password" autocomplete="off"><br><br>
+                    <input type="submit" id="submit" value="Agregar">
+                </form>
+            </div>
+        </div>
+        <!-- <script src="/static/js/app.js"></script> -->
+</body>
+<%- include('../partials/footer', { active: 'dashboard' }) %>
