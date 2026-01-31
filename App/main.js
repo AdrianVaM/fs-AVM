@@ -1,7 +1,9 @@
 const express = require('express');
 const path = require('path');
 const app = express();
-const PORT = 5000;
+
+process.loadEnvFile()
+const PORT = process.env.port ?? 5000;
 
 // Configurar EJS como motor de plantillas
 app.set('view engine', 'ejs');
@@ -17,18 +19,22 @@ const users = [];
 
 app.route('/form')
     .get((req, res) => {
-        res.render('form', { users });
+        res.render('layouts/form', { users });
     })
     .post((req, res) => {
         const { name, password } = req.body;
         if (name && password) {
             users.push({ name, password });
         }
-        res.render('form', { users });
+        res.render('layouts/form', { users });
     });
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'templates', 'index.html'));
+    res.sendFile(path.join(__dirname, 'templates/layouts', 'index.html'));
+});
+
+app.get('/test', (req, res) => {
+    res.send("hola mundo")
 });
 
 app.listen(PORT, () => {
