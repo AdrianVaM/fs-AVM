@@ -104,9 +104,9 @@ app.post('/groups/create', async (req, res) => {
     }
     // Crear grupo y asociar usuario
     const userId = await getUserIdByName(req.session.user);
-    const result = await updateRegistries("INSERT INTO TeamGroups (Gname, UStatus) VALUES (?, JSON_OBJECT())", [groupName]);
+    const result = await updateRegistries("INSERT INTO TeamGroups (Gname) VALUES (?)", [groupName]);
     const groupId = result.insertId;
-    await updateRegistries("INSERT INTO UserGroups (UserID, GroupID) VALUES (?, ?)", [userId, groupId]);
+    await updateRegistries("INSERT INTO UserGroups (UserID, GroupID, URole, UStatus) VALUES (?, ?, ?, ?)", [userId, groupId, 2, 1]);
     res.redirect('/dashboard');
 });
 
@@ -116,15 +116,13 @@ app.get('/groups/:id', async (req, res) => {
     const groupId = req.params.id;
     const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
     if (!group) return res.status(404).send('Grupo no encontrado');
-    // Obtener usuarios del grupo y su status
+    // Obtener usuarios del grupo y el rol del usuario en sesión
     let members = [];
-    if (group.UStatus) {
-        try {
-            members = Object.entries(JSON.parse(group.UStatus)).map(([userId, status]) => ({ userId, status }));
-        } catch (e) { members = []; }
-    }
+    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
+    if (membersInfo) members = membersInfo; else members = [];
     const userId = await getUserIdByName(req.session.user);
-    res.render('layouts/group', { user: req.session.user, userId, group, members, error: null });
+    const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
+    res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: null });
 });
 
 // Borrar grupo
@@ -144,36 +142,45 @@ app.post('/groups/:id/delete', async (req, res) => {
 app.post('/groups/:id/adduser', async (req, res) => {
     if (!req.session || !req.session.user) return res.redirect('/login');
     const groupId = req.params.id;
-    const { userId, status } = req.body;
+    const uId = req.body.userId;
     const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
     if (!group) return res.status(404).send('Grupo no encontrado');
-    // Verificar que el usuario existe
-    const user = await getRegistry("SELECT * FROM Users WHERE UserID = ?", [userId]);
+    const user = await getRegistry("SELECT * FROM Users WHERE UserID = ?", [uId]);
+    let members = [];
+    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.GroupID, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
+    if (membersInfo) members = membersInfo; else members = [];
+    const userId = await getUserIdByName(req.session.user);
+    const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
+    // Verificar que el usuario existe>   
     if (!user) {
-        let members = [];
-        if (group.UStatus) {
-            try {
-                members = Object.entries(JSON.parse(group.UStatus)).map(([userId, status]) => ({ userId, status }));
-            } catch (e) { members = []; }
-        }
-        return res.render('layouts/group', { user: req.session.user, group, members, error: 'Usuario no encontrado' });
+        return res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: 'Usuario no encontrado' });
     }
     // Añadir a UserGroups si no existe
     const exists = await getRegistry("SELECT * FROM UserGroups WHERE UserID = ? AND GroupID = ?", [userId, groupId]);
     if (!exists) {
-        await updateRegistries("INSERT INTO UserGroups (UserID, GroupID) VALUES (?, ?)", [userId, groupId]);
+        await updateRegistries("INSERT INTO UserGroups (UserID, GroupID, URole, UStatus) VALUES (?, ?, ?, ?)", [userId, groupId, 1, 1]);
     }
-    // Actualizar UStatus JSON
-    let ustatus = {};
-    if (group.UStatus) {
-        try { ustatus = JSON.parse(group.UStatus); } catch (e) { ustatus = {}; }
-    }
-    ustatus[userId] = status === 'activo' ? 'activo' : 'inactivo';
-    await updateRegistries("UPDATE TeamGroups SET UStatus = ? WHERE GroupID = ?", [JSON.stringify(ustatus), groupId]);
     // Refrescar datos
-    let members = Object.entries(ustatus).map(([userId, status]) => ({ userId, status }));
-    res.render('layouts/group', { user: req.session.user, group: { ...group, UStatus: JSON.stringify(ustatus) }, members, error: null });
+    res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: null });
 });
+
+app.post('/groups/:id/rmvuser/:uid', async (req, res) => {
+    if (!req.session || !req.session.user) return res.redirect('/login');
+    const groupId = req.params.id;
+    const uId = req.params.uid;
+    // Verificar que el usuario existe>   
+    if (!uId) return res.status(404).send("Usuario no encontrado")
+    await updateRegistries("DELETE FROM UserGroups WHERE GroupID = ? AND UserID = ?", [groupId, userId]);
+    const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
+    if (!group) return res.status(404).send('Grupo no encontrado');
+    let members = [];
+    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.GroupID, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
+    if (membersInfo) members = membersInfo; else members = [];
+    const userId = await getUserIdByName(req.session.user);
+    const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
+    res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: null });
+
+})
 
 // Ruta para cerrar sesión
 app.get('/logout', (req, res) => {

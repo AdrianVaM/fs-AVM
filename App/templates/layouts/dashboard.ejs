@@ -6,30 +6,34 @@
 </head>
 
 <body>
-    <%- include('../partials/topbar', { active: 'dashboard', user: user, userId: userId }) %>
-    <div class="main">
-        <div class="container" style="display: flex; gap: 2rem;">
-            <div style="min-width: 250px;">
-                <h3>Mis Grupos</h3>
-                <a href="/groups/create"><button>Crear grupo</button></a>
-                <div class="group-list">
-                    <% if (groups && groups.length > 0) { %>
-                        <% groups.forEach(function(group) { %>
-                            <div class="group-card">
-                                <a href="/groups/<%= group.GroupID %>"><%= group.Gname %></a>
-                            </div>
-                        <% }) %>
-                    <% } else { %>
-                        <div>No perteneces a ningún grupo.</div>
-                    <% } %>
+    <%- include('../partials/topbar', { active: 'dashboard' , user: user, userId: userId }) %>
+        <div class="main">
+            <div class="container" style="display: flex; gap: 2rem;">
+                <div style="min-width: 250px;">
+                </div>
+                <div style="flex:1;">
+                    <h2>Bienvenido, <%= user %>
+                    </h2>
+                    <p>Selecciona un grupo para ver su información.</p>
+                    <a href="/groups/create"><button>Crear grupo</button></a>
                 </div>
             </div>
-            <div style="flex:1;">
-                <!-- Aquí puedes poner el contenido principal del dashboard -->
-                <h2>Bienvenido, <%= user %></h2>
-                <p>Selecciona un grupo para ver su información.</p>
+
+            <h3>Mis Grupos</h3>
+            <div class="group-list">
+                <% if (groups && groups.length> 0) { %>
+                    <% groups.forEach(function(group) { %>
+                        <div class="container">
+                            <a href="/groups/<%= group.GroupID %>">
+                                <%= group.Gname %>
+                            </a>
+                        </div>
+                        <% }) %>
+                            <% } else { %>
+                                <div>No perteneces a ningún grupo.<a href="/groups/create"><button>Crear uno
+                                            nuevo.</button></a></div>
+                                <% } %>
             </div>
         </div>
-    </div>
 </body>
 <%- include('../partials/footer', { active: 'dashboard' }) %>
