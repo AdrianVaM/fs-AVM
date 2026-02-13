@@ -8,18 +8,27 @@
 </head>
 
 <body>
-    <%- include('../partials/topbar', { user: user, userId: userId }) %>
+    <%- include('../partials/topbar', { user: user, userId: userId}) %>
         <div class="main">
             <div class="container">
                 <h2>Grupo: <%= group.Gname %>
                 </h2>
-                <form method="POST" action="/groups/<%= group.GroupID %>/delete"
-                    onsubmit="return confirm('¿Seguro que deseas borrar este grupo? Esta acción no se puede deshacer.');"
-                    style="margin-bottom: 2rem;">
-                    <button type="submit"
-                        style="background: #d32f2f; color: #fff; font-weight: bold; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 1.1em;">Borrar
-                        grupo</button>
-                </form>
+                <% if (userRole && userRole.URole==="admin" ) {%>
+                    <form method="POST" action="/groups/<%= group.GroupID %>/delete"
+                        onsubmit="return confirm('¿Seguro que deseas borrar este grupo? Esta acción no se puede deshacer.');"
+                        style="margin-bottom: 2rem;">
+                        <button type="submit"
+                            style="background: #d32f2f; color: #fff; font-weight: bold; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 1.1em;">Borrar
+                            grupo</button>
+                        <%} else {%>
+                            <form method="POST" action="/groups/<%= group.GroupID %>/rmvuser/<%= userId%>"
+                                onsubmit="return confirm('¿Seguro que abandonar este grupo? Esta acción no se puede deshacer.');"
+                                style="margin-bottom: 2rem;">
+                                <button type="submit"
+                                    style="background: #d32f2f; color: #fff; font-weight: bold; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 1.1em;">Abandonar
+                                    grupo</button>
+                                <%}%>
+                            </form>
             </div>
             <div class="container">
                 <h3>Registrar usuario</h3>
@@ -36,33 +45,55 @@
                         <br>
                         <div class="table-scroll-container">
                             <table>
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                        <th>Status</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <% members.forEach(function(m) { %>
-                                    <tbody>
-                                        <tr data-idx=>
-                                            <td>
-                                                <%=m.UserID %>
-                                            </td>
-                                            <td>
-                                                <%=m.Uname%>
-                                            </td>
-                                            <td>
-                                                <%=m.UStatus%>
-                                            </td>
-                                            <td>
-                                                <form action="/groups/<%= group.GroupID %>/rmvuser/<%= m.UserID %>"
-                                                    method="POST"><button>Eliminar</button></form>
-                                            </td>
+                                <% if (userRole && userRole.URole==="admin" ) {%>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre</th>
+                                            <th>Status</th>
+                                            <th></th>
                                         </tr>
-                                    </tbody>
-                                    <% }); %>
+                                    </thead>
+                                    <% members.forEach(function(m) { %>
+                                        <tbody>
+                                            <tr data-idx=>
+                                                <td>
+                                                    <%=m.UserID %>
+                                                </td>
+                                                <td>
+                                                    <%=m.Uname%>
+                                                </td>
+                                                <td>
+                                                    <% if (m.UStatus===1 ) {%>Activo<%} else {%>Inactivo<% }%>
+                                                </td>
+                                                <td>
+                                                    <form action=" /groups/<%=group.GroupID %>/rmvuser/<%= m.UserID %>"
+                                                        method="POST"><button>Eliminar</button></form>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                        <% }); %>
+                                            <%} else {%>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Nombre</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <% members.forEach(function(m) { %>
+                                                    <tbody>
+                                                        <tr data-idx=>
+                                                            <td>
+                                                                <%=m.Uname%>
+                                                            </td>
+                                                            <td>
+                                                                <% if (m.UStatus===1 ) {%>Activo<%} else {%>Inactivo<%
+                                                                            }%>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                    <% }); %>
+                                                        <% }%>
                             </table>
                         </div>
             </div>

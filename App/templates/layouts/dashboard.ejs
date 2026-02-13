@@ -8,9 +8,7 @@
 <body>
     <%- include('../partials/topbar', { active: 'dashboard' , user: user, userId: userId }) %>
         <div class="main">
-            <div class="container" style="display: flex; gap: 2rem;">
-                <div style="min-width: 250px;">
-                </div>
+            <div class="container" id="contmain" style="display: flex; gap: 2rem;">
                 <div style="flex:1;">
                     <h2>Bienvenido, <%= user %>
                     </h2>
@@ -30,7 +28,7 @@
                         </div>
                         <% }) %>
                             <% } else { %>
-                                <div>No perteneces a ningún grupo.<a href="/groups/create"><button>Crear uno
+                                <div>No perteneces a ningún grupo. <a href="/groups/create"><button>Crear uno
                                             nuevo.</button></a></div>
                                 <% } %>
             </div>

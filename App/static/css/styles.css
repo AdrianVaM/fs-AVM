@@ -64,6 +64,14 @@ body {
     margin-bottom: 5vh;
 }
 
+#contmain {
+    background-color: #fff;
+}
+
+#form {
+    width: 40%
+}
+
 .object {
     width: 100%;
     height: 100%;

@@ -16,6 +16,7 @@ app.use(session({
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 } // 1 hora
 }));
+
 // Configurar EJS como motor de plantillas
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'templates'));
@@ -45,6 +46,7 @@ app.route('/login')
             const match = await bcrypt.compare(password, result[0].PWordHash);
             if (match) {
                 req.session.user = name;
+                req.session.userId = await getUserIdByName(name);
                 return res.redirect('/dashboard');
             } else {
                 return res.render('layouts/login', { error: 'Contraseña incorrecta', user: req.session.user });
@@ -74,36 +76,35 @@ app.route('/register')
     });
 
 app.get('/dashboard', async (req, res) => {
-    if (!req.session || !req.session.user) {
+    if (!req.session || !req.session.user || !req.session.userId) {
         return res.redirect('/login');
     }
-    const userId = await getUserIdByName(req.session.user);
     let groups = [];
-    if (userId) {
+    if (req.session.userId) {
         groups = await getRegistries(
             `SELECT g.GroupID, g.Gname FROM TeamGroups g
             JOIN UserGroups ug ON g.GroupID = ug.GroupID
-            WHERE ug.UserID = ?`, [userId]
+            WHERE ug.UserID = ?`, [req.session.userId]
         ) || [];
     }
-    res.render('layouts/dashboard', { user: req.session.user, userId, groups });
+    res.render('layouts/dashboard', { user: req.session.user, userId: req.session.userId, groups });
 });
 
 // Página para crear grupo
 app.get('/groups/create', (req, res) => {
-    if (!req.session || !req.session.user) return res.redirect('/login');
+    if (!req.session || !req.session.user || !req.session.userId) return res.redirect('/login');
     res.render('layouts/createGroup', { user: req.session.user, error: null });
 });
 
 // Lógica para crear grupo
 app.post('/groups/create', async (req, res) => {
-    if (!req.session || !req.session.user) return res.redirect('/login');
+    if (!req.session || !req.session.user || !req.session.userId) return res.redirect('/login');
     const { groupName } = req.body;
     if (!groupName) {
         return res.render('layouts/createGroup', { user: req.session.user, error: 'Nombre requerido' });
     }
     // Crear grupo y asociar usuario
-    const userId = await getUserIdByName(req.session.user);
+    const userId = req.session.userId;
     const result = await updateRegistries("INSERT INTO TeamGroups (Gname) VALUES (?)", [groupName]);
     const groupId = result.insertId;
     await updateRegistries("INSERT INTO UserGroups (UserID, GroupID, URole, UStatus) VALUES (?, ?, ?, ?)", [userId, groupId, 2, 1]);
@@ -112,7 +113,7 @@ app.post('/groups/create', async (req, res) => {
 
 // Página de grupo específico
 app.get('/groups/:id', async (req, res) => {
-    if (!req.session || !req.session.user) return res.redirect('/login');
+    if (!req.session || !req.session.user || !req.session.userId) return res.redirect('/login');
     const groupId = req.params.id;
     const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
     if (!group) return res.status(404).send('Grupo no encontrado');
@@ -120,17 +121,17 @@ app.get('/groups/:id', async (req, res) => {
     let members = [];
     const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
     if (membersInfo) members = membersInfo; else members = [];
-    const userId = await getUserIdByName(req.session.user);
+    const userId = req.session.userId;
     const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
     res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: null });
 });
 
 // Borrar grupo
 app.post('/groups/:id/delete', async (req, res) => {
-    if (!req.session || !req.session.user) return res.redirect('/login');
+    if (!req.session || !req.session.user || !req.session.userId) return res.redirect('/login');
     const groupId = req.params.id;
     // Opcional: solo permitir borrar si el usuario pertenece al grupo
-    const userId = await getUserIdByName(req.session.user);
+    const userId = req.session.userId;
     const isMember = await getRegistry("SELECT * FROM UserGroups WHERE UserID = ? AND GroupID = ?", [userId, groupId]);
     if (!isMember) return res.status(403).send('No autorizado para borrar este grupo');
     await updateRegistries("DELETE FROM TeamGroups WHERE GroupID = ?", [groupId]);
@@ -140,43 +141,44 @@ app.post('/groups/:id/delete', async (req, res) => {
 
 // Añadir usuario a grupo por ID y actualizar UStatus
 app.post('/groups/:id/adduser', async (req, res) => {
-    if (!req.session || !req.session.user) return res.redirect('/login');
+    if (!req.session || !req.session.user || !req.session.userId) return res.redirect('/login');
     const groupId = req.params.id;
     const uId = req.body.userId;
-    const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
-    if (!group) return res.status(404).send('Grupo no encontrado');
     const user = await getRegistry("SELECT * FROM Users WHERE UserID = ?", [uId]);
-    let members = [];
-    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.GroupID, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
-    if (membersInfo) members = membersInfo; else members = [];
-    const userId = await getUserIdByName(req.session.user);
-    const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
     // Verificar que el usuario existe>   
     if (!user) {
         return res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: 'Usuario no encontrado' });
     }
     // Añadir a UserGroups si no existe
-    const exists = await getRegistry("SELECT * FROM UserGroups WHERE UserID = ? AND GroupID = ?", [userId, groupId]);
+    const exists = await getRegistry("SELECT * FROM UserGroups WHERE UserID = ? AND GroupID = ?", [uId, groupId]);
     if (!exists) {
-        await updateRegistries("INSERT INTO UserGroups (UserID, GroupID, URole, UStatus) VALUES (?, ?, ?, ?)", [userId, groupId, 1, 1]);
+        await updateRegistries("INSERT INTO UserGroups (UserID, GroupID, URole, UStatus) VALUES (?, ?, ?, ?)", [uId, groupId, 1, 1]);
     }
     // Refrescar datos
-    res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: null });
-});
-
-app.post('/groups/:id/rmvuser/:uid', async (req, res) => {
-    if (!req.session || !req.session.user) return res.redirect('/login');
-    const groupId = req.params.id;
-    const uId = req.params.uid;
-    // Verificar que el usuario existe>   
-    if (!uId) return res.status(404).send("Usuario no encontrado")
-    await updateRegistries("DELETE FROM UserGroups WHERE GroupID = ? AND UserID = ?", [groupId, userId]);
     const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
     if (!group) return res.status(404).send('Grupo no encontrado');
     let members = [];
     const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.GroupID, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
     if (membersInfo) members = membersInfo; else members = [];
-    const userId = await getUserIdByName(req.session.user);
+    const userId = req.session.userId;
+    const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
+    res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: null });
+});
+
+app.post('/groups/:id/rmvuser/:uid', async (req, res) => {
+    if (!req.session || !req.session.user || !req.session.userId) return res.redirect('/login');
+    const groupId = req.params.id;
+    const uId = req.params.uid;
+    // Verificar que el usuario existe>   
+    if (!uId) return res.status(404).send("Usuario no encontrado")
+    await updateRegistries("DELETE FROM UserGroups WHERE GroupID = ? AND UserID = ?", [groupId, uId]);
+    if (Number(uId) === req.session.userId) return res.redirect("/dashboard")
+    const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
+    if (!group) return res.status(404).send('Grupo no encontrado');
+    let members = [];
+    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.GroupID, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
+    if (membersInfo) members = membersInfo; else members = [];
+    const userId = req.session.userId;
     const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
     res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: null });
 
