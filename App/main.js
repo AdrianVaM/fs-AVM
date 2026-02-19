@@ -25,6 +25,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, '/static/resources', 'favicon.ico'));
+});
+
 app.get('/', (req, res) => {
     res.render('layouts/index', { error: null, user: req.session.user });
 });
