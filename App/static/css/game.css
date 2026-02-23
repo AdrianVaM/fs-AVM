@@ -93,11 +93,12 @@
     background: var(--dark);
     color: var(--btn-text);
     border: 2px solid var(--dark);
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: var(--btn-padding);
+    border-radius: var(--btn-border-radius);
     cursor: pointer;
     text-decoration: none;
     font-weight: 600;
+    font-size: var(--btn-font-size);
     transition: background 0.2s;
 }
 
