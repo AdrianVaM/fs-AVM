@@ -111,7 +111,7 @@ app.post('/groups/create', async (req, res) => {
     const userId = req.session.userId;
     const result = await updateRegistries("INSERT INTO TeamGroups (Gname) VALUES (?)", [groupName]);
     const groupId = result.insertId;
-    await updateRegistries("INSERT INTO UserGroups (UserID, GroupID, URole, UStatus) VALUES (?, ?, ?, ?)", [userId, groupId, 2, 1]);
+    await updateRegistries("INSERT INTO UserGroups (UserID, GroupID, URole, UStatus, UMaxKills) VALUES (?, ?, ?, ?, ?)", [userId, groupId, 2, 1, 0]);
     res.redirect('/dashboard');
 });
 
@@ -123,7 +123,7 @@ app.get('/groups/:id', async (req, res) => {
     if (!group) return res.status(404).send('Grupo no encontrado');
     // Obtener usuarios del grupo y el rol del usuario en sesión
     let members = [];
-    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
+    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.URole, ug.UStatus, ug.UMaxKills FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
     if (membersInfo) members = membersInfo; else members = [];
     const userId = req.session.userId;
     const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
@@ -156,13 +156,13 @@ app.post('/groups/:id/adduser', async (req, res) => {
     // Añadir a UserGroups si no existe
     const exists = await getRegistry("SELECT * FROM UserGroups WHERE UserID = ? AND GroupID = ?", [uId, groupId]);
     if (!exists) {
-        await updateRegistries("INSERT INTO UserGroups (UserID, GroupID, URole, UStatus) VALUES (?, ?, ?, ?)", [uId, groupId, 1, 1]);
+        await updateRegistries("INSERT INTO UserGroups (UserID, GroupID, URole, UStatus, UMaxKills) VALUES (?, ?, ?, ?, ?)", [uId, groupId, 1, 1, 0]);
     }
     // Refrescar datos
     const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
     if (!group) return res.status(404).send('Grupo no encontrado');
     let members = [];
-    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.GroupID, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
+    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.GroupID, ug.URole, ug.UStatus, ug.UMaxKills FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
     if (membersInfo) members = membersInfo; else members = [];
     const userId = req.session.userId;
     const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
@@ -180,13 +180,41 @@ app.post('/groups/:id/rmvuser/:uid', async (req, res) => {
     const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
     if (!group) return res.status(404).send('Grupo no encontrado');
     let members = [];
-    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.GroupID, ug.URole, ug.UStatus FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
+    const membersInfo = await getRegistries("SELECT u.UserID, u.Uname, ug.GroupID, ug.URole, ug.UStatus, ug.UMaxKills FROM users u INNER JOIN usergroups ug ON u.UserID = ug.UserID WHERE ug.GroupID = ?;", [groupId])
     if (membersInfo) members = membersInfo; else members = [];
     const userId = req.session.userId;
     const userRole = await getRegistry("SELECT URole FROM usergroups WHERE UserID = ?", [userId])
     res.render('layouts/group', { user: req.session.user, userId, userRole, group, members, error: null });
 
 })
+
+// Juego ligado a grupos: mostrar el juego dentro del contexto de un grupo
+app.get('/groups/:id/game', async (req, res) => {
+    if (!req.session || !req.session.user || !req.session.userId) return res.redirect('/login');
+    const groupId = req.params.id;
+    const group = await getRegistry("SELECT * FROM TeamGroups WHERE GroupID = ?", [groupId]);
+    if (!group) return res.status(404).send('Grupo no encontrado');
+    // Verificar que el usuario pertenece al grupo
+    const membership = await getRegistry("SELECT * FROM UserGroups WHERE UserID = ? AND GroupID = ?", [req.session.userId, groupId]);
+    if (!membership) return res.status(403).send('No perteneces a este grupo');
+    res.render('layouts/game', { user: req.session.user, userId: req.session.userId, group });
+});
+
+// Endpoint para registrar score (kills) por usuario en un grupo
+app.post('/groups/:id/game/score', async (req, res) => {
+    if (!req.session || !req.session.user || !req.session.userId) return res.status(401).json({ error: 'No autenticado' });
+    const groupId = req.params.id;
+    const userId = req.session.userId;
+    const kills = parseInt(req.body.kills || 0, 10);
+    if (isNaN(kills) || kills < 0) return res.status(400).json({ error: 'Kills inválidos' });
+    const membership = await getRegistry("SELECT UMaxKills FROM UserGroups WHERE UserID = ? AND GroupID = ?", [userId, groupId]);
+    if (!membership) return res.status(403).json({ error: 'No perteneces a este grupo' });
+    const prev = membership.UMaxKills || 0;
+    if (kills > prev) {
+        await updateRegistries("UPDATE UserGroups SET UMaxKills = ? WHERE UserID = ? AND GroupID = ?", [kills, userId, groupId]);
+    }
+    return res.json({ ok: true, previous: prev, updated: Math.max(prev, kills) });
+});
 
 // Ruta para cerrar sesión
 app.get('/logout', (req, res) => {

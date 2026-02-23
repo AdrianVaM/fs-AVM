@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RSS de SA de CV</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/game.css">
+</head>
+
+<body>
+    <%- include('../partials/topbar', { user: user, userId: userId}) %>
+        <div class="game-root">
+            <main class="game-main">
+                <section class="game-area">
+                    <canvas id="gameCanvas" width="432" height="432" aria-label="Canvas del juego"></canvas>
+                </section>
+
+                <aside class="game-sidebar">
+                    <div class="game-controls-top">
+                        <a href="/groups/<%= group.GroupID %>"><button id="returnBtn" class="btn">Volver</button></a>
+                        <button id="restartBtn" class="btn">Reiniciar</button>
+                    </div>
+                    <div class="stat">Jugador: <strong>
+                            <%= user || 'Invitado' %>
+                        </strong></div>
+                    <div class="stat">Zona: <span id="zone">Bosque</span></div>
+                    <div class="stat">Salud: <span id="hp">100</span></div>
+                    <div class="stat">Eliminados: <span id="kills">0</span></div>
+                    <div class="note">
+                        <strong>Controles:</strong><br />
+                        ⬆️⬇️⬅️➡️ = cambiar dirección<br />
+                        WASD = moverse<br />
+                        Espacio = atacar<br />
+                    </div>
+                </aside>
+            </main>
+        </div><br>
+        <%- include('../partials/footer', { active: 'dashboard' }) %>
+            <script>
+                window.GAME_CONTEXT = {
+                    groupId: <%= group? group.GroupID : 'null' %>,
+                    userId: <%= typeof userId !== 'undefined' ? userId : 'null' %>
+                };
+            </script>
+            <script src="/static/js/game.js"></script>
+</body>
+
+</html>

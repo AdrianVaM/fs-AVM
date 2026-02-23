@@ -5,11 +5,21 @@ body {
     padding: 0;
 }
 
+:root {
+    --bg: #ffffff;
+    --dark: #2d3142;
+    --accent: #EF8354;
+    --muted: #bfc0c0;
+    --muted-2: #4f5d75;
+    --btn-text: #bfc0c0;
+    --tile: #061028;
+}
+
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-color: #FFF;
+    background-color: var(--bg);
     box-sizing: border-box;
 }
 
@@ -19,8 +29,8 @@ body {
     left: 0;
     width: 100%;
     height: 10vh;
-    background-color: #2d3142;
-    border-bottom: 5px solid #EF8354;
+    background-color: var(--dark);
+    border-bottom: 5px solid var(--accent);
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -32,10 +42,10 @@ body {
 
 .topbar-title {
     font: 2rem "Aptos";
-    color: #bfc0c0;
+    color: var(--btn-text);
     font-weight: 700;
-    background-color: #4f5d75;
-    border: 2px solid #bfc0c0;
+    background-color: var(--muted-2);
+    border: 2px solid var(--btn-text);
     border-radius: 5px;
     padding: 2px 2px;
     text-align: center;
@@ -56,7 +66,7 @@ body {
 
 .container {
     box-sizing: border-box;
-    background-color: #bfc0c0;
+    background-color: var(--muted);
     border-radius: 5px;
     justify-content: center;
     align-items: center;
@@ -91,7 +101,7 @@ grid>.container {
 }
 
 .imgcont {
-    background-color: #bfc0c0;
+    background-color: var(--muted);
     justify-content: center;
     align-items: center;
     width: 100%;
@@ -126,15 +136,6 @@ grid {
     font: 1.5rem;
 }
 
-.censored {
-    filter: blur(5px);
-    transition: filter 0.3s ease;
-}
-
-.censored:hover {
-    filter: blur(0);
-}
-
 #itemList>.container {
     width: 15rem;
 }
@@ -143,8 +144,8 @@ grid {
 footer {
     width: 100%;
     height: 25vh;
-    background-color: #bfc0c0;
-    border-bottom: 5px solid #EF8354;
+    background-color: var(--muted);
+    border-bottom: 5px solid var(--accent);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -170,24 +171,24 @@ ul {
 }
 
 button {
-    background-color: #2d3142;
-    color: #bfc0c0;
-    border: 2px solid #2d3142;
+    background-color: var(--dark);
+    color: var(--btn-text);
+    border: 2px solid var(--dark);
     border-radius: 3px;
     font: 2rem;
     padding: 4px 7px;
 }
 
 button:hover {
-    background-color: #4f5d75;
+    background-color: var(--muted-2);
 }
 
 a {
-    color: #4f5d75;
+    color: var(--muted-2);
 }
 
 a:visited {
-    color: #2d3142;
+    color: var(--dark);
 }
 
 .bold {
@@ -277,9 +278,8 @@ table {
     }
 }
 
-/* Form controls and login/register containers */
 .container#form {
-    max-width: 700px;
+    max-width: 600px;
     margin: 0.5rem auto;
     padding: 1rem;
 }
@@ -287,7 +287,6 @@ table {
 .container#form form {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
 }
 
 label {
@@ -312,8 +311,8 @@ input:focus,
 textarea:focus,
 select:focus {
     outline: none;
-    border-color: #4f5d75;
-    box-shadow: 0 0 0 3px #4f5d7510;
+    border-color: var(--muted-2);
+    box-shadow: 0 0 0 3px var(--muted-210);
 }
 
 /* Make group list items clearer on small screens */
@@ -347,9 +346,7 @@ table td {
     white-space: nowrap;
 }
 
-.table-scroll-container {
-    width: 100%;
-}
+/* width for .table-scroll-container already set above */
 
 @media (max-width: 600px) {
     table td {

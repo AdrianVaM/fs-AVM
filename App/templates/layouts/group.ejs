@@ -13,6 +13,8 @@
             <div class="container">
                 <h2>Grupo: <%= group.Gname %>
                 </h2>
+                <a class="btn" href="/groups/<%= group.GroupID %>/game"><button
+                        style="margin-left:10px;background:#667eea;color:#fff">🎮 Jugar</button></a>
                 <% if (userRole && userRole.URole==="admin" ) {%>
                     <form method="POST" action="/groups/<%= group.GroupID %>/delete"
                         onsubmit="return confirm('¿Seguro que deseas borrar este grupo? Esta acción no se puede deshacer.');"
@@ -50,6 +52,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Nombre</th>
+                                            <th>Score</th>
                                             <th>Status</th>
                                             <th></th>
                                         </tr>
@@ -62,6 +65,10 @@
                                                 </td>
                                                 <td>
                                                     <%=m.Uname%>
+                                                </td>
+                                                <td>
+                                                    <%= (m.UMaxKills !==undefined && m.UMaxKills !==null) ? m.UMaxKills
+                                                        : 0 %>
                                                 </td>
                                                 <td>
                                                     <% if (m.UStatus===1 ) {%>Activo<%} else {%>Inactivo<% }%>
@@ -85,6 +92,10 @@
                                                         <tr data-idx=>
                                                             <td>
                                                                 <%=m.Uname%>
+                                                            </td>
+                                                            <td>
+                                                                <%= (m.UMaxKills !==undefined && m.UMaxKills !==null) ?
+                                                                    m.UMaxKills : 0 %>
                                                             </td>
                                                             <td>
                                                                 <% if (m.UStatus===1 ) {%>Activo<%} else {%>Inactivo<%
