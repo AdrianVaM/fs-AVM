@@ -11,24 +11,26 @@
     <%- include('../partials/topbar', { user: user, userId: userId}) %>
         <div class="main">
             <div class="container">
-                <h2>Grupo: <%= group.Gname %>
-                </h2>
-                <grid style="justify-content: center;">
-                    <a class="btn" href="/groups/<%= group.GroupID %>/game"><button>Jugar</button></a>
-                    <% if (userRole && userRole.URole==="admin" ) {%>
-                        <form method="POST" action="/groups/<%= group.GroupID %>/delete"
-                            onsubmit="return confirm('¿Seguro que deseas borrar este grupo? Esta acción no se puede deshacer.');"
-                            style="margin-bottom: 2rem;">
-                            <button class="dangerBtn" type="submit">Borrar
-                                grupo</button>
-                            <%} else {%>
-                                <form method="POST" action="/groups/<%= group.GroupID %>/rmvuser/<%= userId%>"
-                                    onsubmit="return confirm('¿Seguro que abandonar este grupo? Esta acción no se puede deshacer.');"
+                <h3>Grupo: <%= group.Gname %>
+                        </h2>
+                        <grid style="justify-content: center;">
+                            <form action="/groups/<%= group.GroupID %>/game" method="get">
+                                <button type="submit">Jugar</button>
+                            </form>
+                            <% if (userRole && userRole.URole==="admin" ) {%>
+                                <form method="POST" action="/groups/<%= group.GroupID %>/delete"
+                                    onsubmit="return confirm('¿Seguro que deseas borrar este grupo? Esta acción no se puede deshacer.');"
                                     style="margin-bottom: 2rem;">
-                                    <button class="dangerBtn" type="submit">Abandonar grupo</button>
-                                    <%}%>
-                                </form>
-                </grid>
+                                    <button class="dangerBtn" type="submit">Borrar
+                                        grupo</button>
+                                    <%} else {%>
+                                        <form method="POST" action="/groups/<%= group.GroupID %>/rmvuser/<%= userId%>"
+                                            onsubmit="return confirm('¿Seguro que abandonar este grupo? Esta acción no se puede deshacer.');"
+                                            style="margin-bottom: 2rem;">
+                                            <button class="dangerBtn" type="submit">Abandonar grupo</button>
+                                            <%}%>
+                                        </form>
+                        </grid>
             </div>
             <div class="container">
                 <% if (userRole && userRole.URole==="admin" ) {%>

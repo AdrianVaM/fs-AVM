@@ -13,7 +13,9 @@
                     <h2>Bienvenido, <%= user %>
                     </h2>
                     <p>Selecciona un grupo para ver su información.</p>
-                    <a href="/groups/create"><button>Crear grupo</button></a>
+                    <form action="/groups/create" method="get">
+                        <button type="submit">Crear grupo</button>
+                    </form>
                 </div>
             </div>
 
@@ -22,7 +24,7 @@
                 <% if (groups && groups.length> 0) { %>
                     <% groups.forEach(function(group) { %>
                         <div class="container">
-                            <a href="/groups/<%= group.GroupID %>">
+                            <a class="group-link" href="/groups/<%= group.GroupID %>">
                                 <%= group.Gname %>
                             </a>
                         </div>
