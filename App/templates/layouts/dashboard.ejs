@@ -23,10 +23,10 @@
             <div class="group-list">
                 <% if (groups && groups.length> 0) { %>
                     <% groups.forEach(function(group) { %>
-                        <div class="container">
-                            <a class="group-link" href="/groups/<%= group.GroupID %>">
-                                <%= group.Gname %>
-                            </a>
+                        <div class="group-card container">
+                            <h4><a class="group-link" href="/groups/<%= group.GroupID %>"><%= group.Gname %></a></h4>
+                            <p><strong>Administrador:</strong> <%= group.adminName || '—' %></p>
+                            <p><strong>Puntuación total:</strong> <%= group.totalScore %></p>
                         </div>
                         <% }) %>
                             <% } else { %>

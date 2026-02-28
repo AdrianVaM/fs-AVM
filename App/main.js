@@ -85,10 +85,24 @@ app.get('/dashboard', async (req, res) => {
     }
     let groups = [];
     if (req.session.userId) {
+        // include admin's name and total score (sum of all users' UMaxKills) for each group
         groups = await getRegistries(
-            `SELECT g.GroupID, g.Gname FROM TeamGroups g
-            JOIN UserGroups ug ON g.GroupID = ug.GroupID
-            WHERE ug.UserID = ?`, [req.session.userId]
+            `SELECT g.GroupID,
+                    g.Gname,
+                    -- find the admin's username for the group
+                    (SELECT u.Uname
+                       FROM Users u
+                       JOIN UserGroups ug2 ON u.UserID = ug2.UserID
+                      WHERE ug2.GroupID = g.GroupID AND ug2.URole = 'admin'
+                      LIMIT 1) AS adminName,
+                    -- compute total score for the group
+                    COALESCE((SELECT SUM(ug3.UMaxKills)
+                                FROM UserGroups ug3
+                               WHERE ug3.GroupID = g.GroupID), 0) AS totalScore
+             FROM TeamGroups g
+             JOIN UserGroups ug ON g.GroupID = ug.GroupID
+             WHERE ug.UserID = ?`,
+            [req.session.userId]
         ) || [];
     }
     res.render('layouts/dashboard', { user: req.session.user, userId: req.session.userId, groups });

@@ -13,10 +13,6 @@ body {
     --muted-2: #4f5d75;
     --btn-text: #bfc0c0;
     --tile: #061028;
-    /* Button sizing (normalized to dangerBtn baseline) */
-    --btn-font-size: 1.1rem;
-    --btn-padding: 3px 8px;
-    --btn-border-radius: 5px;
 }
 
 body {
@@ -42,6 +38,7 @@ body {
     padding: 0 16px;
     z-index: 100;
     margin-bottom: 5vh;
+    box-shadow: 1px 1px 4px var(--dark);
 }
 
 .topbar-title {
@@ -78,10 +75,39 @@ body {
     width: 100%;
     text-align: center;
     margin-bottom: 5vh;
+    box-shadow: 1px 1px 4px var(--dark);
+}
+
+/* card-style for groups on dashboard */
+.group-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background-color: var(--muted);
+    border: 1px solid var(--muted-2);
+    text-align: left;
+    max-width: 350px;
+    margin: 0.5rem auto;
+}
+
+.group-card h4 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.group-card a.group-link {
+    color: var(--dark);
+    text-decoration: none;
+}
+
+.group-card a.group-link:hover {
+    text-decoration: underline;
 }
 
 #contmain {
     background-color: #fff;
+    box-shadow: none;
 }
 
 #form {
